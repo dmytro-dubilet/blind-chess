@@ -1,0 +1,306 @@
+import Foundation
+
+enum AppLanguage: String, CaseIterable, Identifiable {
+    case ru, uk, en
+    var id: String { rawValue }
+    var name: String {
+        switch self { case .ru: return "Русский"; case .uk: return "Українська"; case .en: return "English" }
+    }
+    var speechLocale: String {
+        switch self { case .ru: return "ru-RU"; case .uk: return "uk-UA"; case .en: return "en-US" }
+    }
+    static var current: AppLanguage {
+        AppLanguage(rawValue: UserDefaults.standard.string(forKey: "blindchess.language") ?? "ru") ?? .ru
+    }
+}
+
+// Russian source keys remain stable; values are Ukrainian and English, respectively.
+enum AppStrings {
+    static let translations: [String: [String]] = [
+        "Выбрать язык": ["Вибрати мову", "Choose language"],
+        "Здесь ход компьютера": ["Тут хід комп’ютера", "Computer’s turn here"],
+        "Новый ход заменит последующие": ["Новий хід замінить наступні", "A new move replaces later moves"],
+        "Перейдите к позиции с вашим ходом": ["Перейдіть до позиції з вашим ходом", "Go to a position where it’s your turn"],
+        "Подготовка словаря": ["Підготовка словника", "Preparing vocabulary"],
+        "Подготовка обработки голоса": ["Підготовка обробки голосу", "Preparing voice processing"],
+        "Загрузка распознавания": ["Завантаження розпізнавання", "Loading recognition"],
+        "Подготовка звука": ["Підготовка звуку", "Preparing audio"],
+        "Этап {0} из 4 · {1}": ["Етап {0} із 4 · {1}", "Step {0} of 4 · {1}"],
+        "Проверяем модель…": ["Перевіряємо модель…", "Checking model…"],
+        "Не удалось сохранить изменения архива. Попробуйте снова.": ["Не вдалося зберегти зміни архіву. Спробуйте знову.", "Could not save archive changes. Try again."],
+        "Не удалось открыть архив. Сохранённый файл не изменён.": ["Не вдалося відкрити архів. Збережений файл не змінено.", "Could not open the archive. The saved file was not changed."],
+        "К концу партии": ["До кінця партії", "Go to end"],
+        "К началу партии": ["До початку партії", "Go to start"],
+        "Начальная позиция": ["Початкова позиція", "Starting position"],
+        "Все записи архива будут удалены. Текущая игра продолжится.": ["Усі записи архіву будуть видалені. Поточна гра продовжиться.", "All archive entries will be deleted. Your current game will continue."],
+        "Удалить все партии": ["Видалити всі партії", "Delete all games"],
+        "Очистить весь архив?": ["Очистити весь архів?", "Clear the entire archive?"],
+        "Запись исчезнет из архива. Текущая игра продолжится.": ["Запис зникне з архіву. Поточна гра продовжиться.", "The entry will be removed from the archive. Your current game will continue."],
+        "Удалить партию?": ["Видалити партію?", "Delete this game?"],
+        "Очистить": ["Очистити", "Clear"],
+        "Удалить": ["Видалити", "Delete"],
+        "{0} · сила {1} · ходов: {2}": ["{0} · сила {1} · ходів: {2}", "{0} · strength {1} · moves: {2}"],
+        "Ничья": ["Нічия", "Draw"],
+        "Не завершена": ["Не завершена", "Unfinished"],
+        "Поражение": ["Поразка", "Loss"],
+        "Победа": ["Перемога", "Win"],
+        "Начатые партии сохраняются здесь автоматически.": ["Розпочаті партії зберігаються тут автоматично.", "Games are saved here automatically once play begins."],
+        "Архив пока пуст": ["Архів поки порожній", "No archived games yet"],
+        "Архив партий": ["Архів партій", "Game archive"],
+        "Продвинутый игрок": ["Просунутий гравець", "Advanced player"],
+        "Гроссмейстер": ["Гросмейстер", "Grandmaster"],
+        "Элитный гроссмейстер": ["Елітний гросмейстер", "Elite grandmaster"],
+        "Магнус Карлсен": ["Магнус Карлсен", "Magnus Carlsen"],
+        "Первые шаги": ["Перші кроки", "First steps"],
+        "Начинающий игрок": ["Гравець-початківець", "Beginner"],
+        "Уверенный любитель": ["Впевнений аматор", "Confident amateur"],
+        "Опытный соперник": ["Досвідчений суперник", "Experienced opponent"],
+        "Мастерский уровень": ["Майстерний рівень", "Master-level play"],
+        "Очень сильный соперник": ["Дуже сильний суперник", "Very strong opponent"],
+        "Уровень игры компьютера": ["Рівень гри комп’ютера", "Computer skill level"],
+        "Уменьшить силу": ["Зменшити силу", "Decrease strength"],
+        "Увеличить силу": ["Збільшити силу", "Increase strength"],
+        "Включаю микрофон…": ["Вмикаю мікрофон…", "Starting microphone…"],
+        "Нажмите, чтобы включить голос": ["Натисніть, щоб увімкнути голос", "Tap to enable voice"],
+        "Микрофон пока выключен": ["Мікрофон поки вимкнений", "Microphone is off for now"],
+        "Подготовка занимает больше времени, чем обычно.": ["Підготовка триває довше, ніж зазвичай.", "Preparation is taking longer than usual."],
+        "Повторить подготовку": ["Повторити підготовку", "Retry preparation"],
+        "Похоже, вы сказали «Отмена».": ["Здається, ви сказали «Скасувати».", "It sounds like you said “Undo”."],
+        "Нет ходов для отмены": ["Немає ходів для скасування", "No moves to undo"],
+        "Какой фигурой на {0}?": ["Якою фігурою на {0}?", "Which piece to {0}?"],
+        "С какой клетки на {0}?": ["З якої клітинки на {0}?", "From which square to {0}?"],
+        "Не уверен, какая клетка названа. Повторите конечную клетку.": ["Не впевнений, яку клітинку названо. Повторіть кінцеву клітинку.", "I'm not sure which square you named. Repeat the destination square."],
+        "Подтвердите ход": ["Підтвердьте хід", "Confirm move"],
+        "Сделать ход": ["Зробити хід", "Play move"],
+        "Повторить команду": ["Повторити команду", "Try again"],
+        "Вы имели в виду: {0}?": ["Ви мали на увазі: {0}?", "Did you mean: {0}?"],
+        "Последняя клетка — куда идёт фигура. Можно назвать обе: «е два — е четыре».": ["Остання клітинка — куди йде фігура. Можна назвати обидві: «е два — е чотири».", "The last square is the destination. You can name both: “e two — e four”."],
+        "Вы проиграли :(": ["Ви програли :(", "You lost :("],
+        "Вы выиграли": ["Ви виграли", "You won"],
+        "Вы победили!": ["Ви перемогли!", "You won!"],
+        "Загрузка голосовой модели": ["Завантаження голосової моделі", "Downloading voice model"],
+        "Скачиваем модель на телефон, чтобы распознавать голос без интернета.": ["Завантажуємо модель на телефон, щоб розпізнавати голос без інтернету.", "Downloading a model to your phone to recognize speech offline."],
+        "Новая партия": ["Нова партія", "New game"],
+        "Ввести ход": ["Ввести хід", "Enter move"],
+        "Отменить ход": ["Скасувати хід", "Undo move"],
+        "Готовлю журнал…": ["Готую журнал…", "Preparing log…"],
+        "Выгрузить журнал": ["Експортувати журнал", "Export log"],
+        "Меню партии": ["Меню партії", "Game menu"],
+        "Вид игры": ["Режим гри", "Game view"],
+        "Вслепую": ["Наосліп", "Blindfold"],
+        "Доска": ["Дошка", "Board"],
+        "На ход назад": ["На хід назад", "Previous move"],
+        "На ход вперёд": ["На хід уперед", "Next move"],
+        "{0}% · около 220 МБ, один раз": ["{0}% · близько 220 МБ, одноразово", "{0}% · about 220 MB, once"],
+        "Шах": ["Шах", "Check"],
+        "К текущей позиции": ["До поточної позиції", "Current position"],
+        "Удерживайте, чтобы говорить": ["Утримуйте, щоб говорити", "Hold to speak"],
+        "Вернуться к игре": ["Повернутися до гри", "Return to game"],
+        "Отпустите, чтобы отправить ход. С VoiceOver: двойное касание начинает или завершает запись.": ["Відпустіть, щоб надіслати хід. З VoiceOver: подвійний дотик починає або завершує запис.", "Release to send your move. With VoiceOver, double-tap to start or stop recording."],
+        "Отмена": ["Скасувати", "Cancel"],
+        "Ошибка движка": ["Помилка рушія", "Engine error"],
+        "Повторить": ["Повторити", "Retry"],
+        "Закрыть": ["Закрити", "Close"],
+        "Попробуйте снова.": ["Спробуйте ще раз.", "Please try again."],
+        "Не удалось выгрузить журнал": ["Не вдалося експортувати журнал", "Could not export log"],
+        "Отменить последний ход?": ["Скасувати останній хід?", "Undo last move?"],
+        "Не отменять": ["Не скасовувати", "Keep move"],
+        "Вернёмся к вашему предыдущему ходу. Ответ компьютера, если он уже сделан, тоже будет отменён.": ["Повернемося до вашого попереднього ходу. Відповідь комп’ютера, якщо вона вже є, теж буде скасована.", "Your previous move and the computer’s reply, if already played, will be undone."],
+        "Голос недоступен": ["Голос недоступний", "Voice unavailable"],
+        "Попробуйте включить микрофон ещё раз.": ["Спробуйте ввімкнути мікрофон ще раз.", "Try turning on the microphone again."],
+        "Просмотр: {0} из {1}": ["Перегляд: {0} із {1}", "Review: {0} of {1}"],
+        "Выберите клетку назначения": ["Виберіть кінцеве поле", "Choose a destination"],
+        "Партия завершена": ["Партію завершено", "Game over"],
+        "Слушаю — назовите ход": ["Слухаю — назвіть хід", "Listening — say your move"],
+        "Микрофон выключен": ["Мікрофон вимкнено", "Microphone off"],
+        "Компьютер отвечает": ["Комп’ютер відповідає", "Computer is responding"],
+        "Компьютер думает": ["Комп’ютер думає", "Computer is thinking"],
+        "Зажмите и скажите ход": ["Затисніть і скажіть хід", "Hold and say your move"],
+        "Нажмите, чтобы вернуться к игре": ["Натисніть, щоб повернутися до гри", "Tap to return to the game"],
+        "Повторное нажатие фигуры — отмена": ["Натисніть фігуру ще раз, щоб скасувати", "Tap the piece again to deselect"],
+        "Новая партия — через меню": ["Нова партія — через меню", "Start a new game from the menu"],
+        "Отпустите, чтобы отправить ход": ["Відпустіть, щоб надіслати хід", "Release to send your move"],
+        "Разбираю записанный ход": ["Розпізнаю записаний хід", "Recognizing your recorded move"],
+        "Дождитесь ответа": ["Дочекайтеся відповіді", "Wait for the reply"],
+        "e2e4 или конь f3": ["e2e4 або кінь f3", "e2e4 or knight f3"],
+        "Ваш ход": ["Ваш хід", "Your turn"],
+        "Готово": ["Готово", "Done"],
+        "Цвет фигур": ["Колір фігур", "Piece color"],
+        "○  Белые": ["○  Білі", "○  White"],
+        "●  Чёрные": ["●  Чорні", "●  Black"],
+        "Сложность": ["Складність", "Difficulty"],
+        "Рейтинг указан приблизительно": ["Рейтинг указано приблизно", "Ratings are approximate"],
+        "Начать партию": ["Почати партію", "Start game"],
+        "Текущая партия будет заменена": ["Поточну партію буде замінено", "This replaces your current game"],
+        "Превратить пешку в…": ["Перетворити пішака на…", "Promote pawn to…"],
+        "Ферзь": ["Ферзь", "Queen"],
+        "Выбрано": ["Вибрано", "Selected"],
+        "Доступный ход": ["Доступний хід", "Available move"],
+        "Голос": ["Голос", "Voice"],
+        "Зажмите микрофон. Когда увидите «Слушаю», назовите ход, например «е два — е четыре». Отпустите кнопку, чтобы отправить запись.": ["Затисніть мікрофон. Коли побачите «Слухаю», назвіть хід, наприклад «е два — е чотири». Відпустіть кнопку, щоб надіслати запис.", "Hold the microphone. When you see “Listening”, say a move such as “e two — e four”. Release to send the recording."],
+        "Нажмите фигуру, затем клетку назначения. В этом режиме компьютер отвечает без озвучивания.": ["Натисніть фігуру, потім кінцеве поле. У цьому режимі комп’ютер відповідає без озвучення.", "Tap a piece, then its destination. In board mode the computer’s moves are not spoken."],
+        "Просмотр партии": ["Перегляд партії", "Review game"],
+        "Свайп влево — ход назад, вправо — вперёд. Ходы не отменяются. Кнопка со стрелкой возвращает к игре.": ["Проведіть ліворуч — хід назад, праворуч — уперед. Ходи не скасовуються. Кнопка зі стрілкою повертає до гри.", "Swipe left for the previous move, right for the next. Moves are not undone. Tap the arrow to return to the game."],
+        "Отмена хода": ["Скасування ходу", "Undo"],
+        "Зажмите микрофон и скажите «Отмена». Ваш ход и ответ компьютера будут отменены. Также можно встряхнуть телефон.": ["Затисніть мікрофон і скажіть «Скасуй». Ваш хід і відповідь комп’ютера буде скасовано. Також можна струснути телефон.", "Hold the microphone and say “Undo”. Your move and the computer’s reply will be undone. You can also shake your phone."],
+        "Ход отменён": ["Хід скасовано", "Move undone"],
+        "Пока нечего отменять.": ["Поки немає чого скасовувати.", "There is no move to undo yet."],
+        "Понятно": ["Зрозуміло", "Got it"],
+        "Компьютер рассчитывает следующий ход": ["Комп’ютер розраховує наступний хід", "Computer is calculating its next move"],
+        "Распознаю ваш ход": ["Розпізнаю ваш хід", "Recognizing your move"],
+        "Слушаю ваш следующий ход": ["Слухаю ваш наступний хід", "Listening for your next move"],
+        "Следующий ход. Микрофон выключен": ["Наступний хід. Мікрофон вимкнено", "Next move. Microphone off"],
+        "{0}. Повторить ход компьютера": ["{0}. Повторити хід комп’ютера", "{0}. Repeat the computer’s move"],
+        "Представьте доску. Первый ход — ваш.": ["Уявіть дошку. Перший хід — ваш.", "Picture the board. You move first."],
+        "Партия сохранена. Можно продолжать.": ["Партію збережено. Можна продовжувати.", "Game saved. You can continue."],
+        "Распознаю ход": ["Розпізнаю хід", "Recognizing move"],
+        "Озвучиваю ход": ["Озвучую хід", "Speaking move"],
+        "Слушаю ваш ход": ["Слухаю ваш хід", "Listening for your move"],
+        "Вам шах": ["Вам шах", "You are in check"],
+        "Ваш ход: {0}": ["Ваш хід: {0}", "Your move: {0}"],
+        "Не удалось рассчитать ход Stockfish. Попробуйте ещё раз.": ["Не вдалося розрахувати хід Stockfish. Спробуйте ще раз.", "Stockfish could not calculate a move. Please try again."],
+        "Stockfish не вернул допустимый ход. Попробуйте ещё раз.": ["Stockfish не повернув допустимий хід. Спробуйте ще раз.", "Stockfish did not return a legal move. Please try again."],
+        " Шах.": [" Шах.", " Check."],
+        "Компьютер: {0}. Ваш ход.": ["Комп’ютер: {0}. Ваш хід.", "Computer: {0}. Your turn."],
+        "Последний ход компьютера. ": ["Останній хід комп’ютера. ", "The computer’s last move. "],
+        "Компьютер ещё не ходил. Ваш ход.": ["Комп’ютер ще не ходив. Ваш хід.", "The computer has not moved yet. Your turn."],
+        "Ход отменён. {0} ходят.": ["Хід скасовано. Ходять {0}.", "Move undone. {0} to move."],
+        "Вы играете чёрными. Компьютер начинает.": ["Ви граєте чорними. Комп’ютер починає.", "You are playing Black. The computer moves first."],
+        "Разрешите доступ к микрофону в Настройках iPhone → Приложения → Blind Chess.": ["Дозвольте доступ до мікрофона в Параметрах iPhone → Програми → Blind Chess.", "Allow microphone access in iPhone Settings → Apps → Blind Chess."],
+        "Готовим распознавание голоса…": ["Готуємо розпізнавання голосу…", "Preparing voice recognition…"],
+        "Модель уже на телефоне. Готовим её к работе без интернета.": ["Модель уже на телефоні. Готуємо її до роботи без інтернету.", "The model is on your phone. Preparing it to work offline."],
+        "Загружаю Whisper": ["Завантажую Whisper", "Downloading Whisper"],
+        "Не удалось подготовить Whisper. Для первой загрузки нужно около 220 МБ, свободное место и интернет. Попробуйте снова.\n{0}": ["Не вдалося підготувати Whisper. Для першого завантаження потрібно близько 220 МБ, вільне місце та інтернет. Спробуйте ще раз.\n{0}", "Could not prepare Whisper. The first download needs about 220 MB, free space and internet. Please try again.\n{0}"],
+        "Whisper ещё не готов. Нажмите микрофон, чтобы загрузить модель.": ["Whisper ще не готовий. Натисніть мікрофон, щоб завантажити модель.", "Whisper is not ready. Tap the microphone to download the model."],
+        "Не удалось включить микрофон. Проверьте аудиоустройство.": ["Не вдалося ввімкнути мікрофон. Перевірте аудіопристрій.", "Could not turn on the microphone. Check your audio device."],
+        "Запись прервалась. Включите микрофон ещё раз.": ["Запис перервався. Увімкніть мікрофон ще раз.", "Recording was interrupted. Turn on the microphone again."],
+        "Запись слишком длинная. Отпустите кнопку и назовите ход ещё раз.": ["Запис задовгий. Відпустіть кнопку й назвіть хід ще раз.", "Recording is too long. Release the button and say your move again."],
+        "Не удалось включить микрофон: {0}": ["Не вдалося ввімкнути мікрофон: {0}", "Could not turn on the microphone: {0}"],
+        "Не удалось расслышать ход. Зажмите микрофон и попробуйте ещё раз.": ["Не вдалося розчути хід. Затисніть мікрофон і спробуйте ще раз.", "Could not hear your move. Hold the microphone and try again."],
+        "Не удалось распознать ход. Попробуйте произнести его ещё раз.": ["Не вдалося розпізнати хід. Спробуйте вимовити його ще раз.", "Could not recognize your move. Please say it again."],
+        "Не удалось включить звук: {0}": ["Не вдалося ввімкнути звук: {0}", "Could not turn on audio: {0}"],
+        "Короткая рокировка": ["Коротка рокіровка", "Kingside castling"],
+        "Длинная рокировка": ["Довга рокіровка", "Queenside castling"],
+        ", превращение: ": [", перетворення: ", ", promoting to "],
+        "Мат. {0} победили.": ["Мат. Перемогли {0}.", "Checkmate. {0} wins."],
+        "Ничья: пат.": ["Нічия: пат.", "Draw by stalemate."],
+        "Ничья: недостаточно материала.": ["Нічия: недостатньо матеріалу.", "Draw by insufficient material."],
+        "Ничья по правилу 50 ходов.": ["Нічия за правилом 50 ходів.", "Draw by the fifty-move rule."],
+        "Ничья: троекратное повторение.": ["Нічия: триразове повторення.", "Draw by threefold repetition."],
+        "Начинающий": ["Початківець", "Beginner"],
+        "Любитель": ["Аматор", "Amateur"],
+        "Сильный любитель": ["Сильний аматор", "Strong amateur"],
+        "Кандидат в мастера": ["Кандидат у майстри", "Candidate master"],
+        "Мастер": ["Майстер", "Master"],
+        "Максимальная сила": ["Максимальна сила", "Maximum strength"],
+        "Минимальная сила Stockfish": ["Мінімальна сила Stockfish", "Minimum Stockfish strength"],
+        "Без ограничения силы · до 3 с на ход": ["Без обмеження сили · до 3 с на хід", "Full strength · up to 3 s per move"],
+        "Ориентир {0} · Stockfish": ["Орієнтир {0} · Stockfish", "Approx. {0} · Stockfish"],
+        "На доске есть только поля от а один до аш восемь.": ["На дошці є лише поля від а один до аш вісім.", "The board only has squares from a one to h eight."],
+        "На поле {0} нет фигуры.": ["На полі {0} немає фігури.", "There is no piece on {0}."],
+        "На поле {0} фигура соперника. Сейчас ходят {1}.": ["На полі {0} фігура суперника. Зараз ходять {1}.", "The piece on {0} belongs to your opponent. It is {1}’s turn."],
+        "Начальное и конечное поле совпадают. Назовите другую клетку назначения.": ["Початкове й кінцеве поля збігаються. Назвіть інше кінцеве поле.", "The starting and destination squares are the same. Name another destination."],
+        "На поле {0} уже стоит ваша фигура.": ["На полі {0} вже стоїть ваша фігура.", "Your own piece is already on {0}."],
+        "Короля не берут. Нужно поставить мат.": ["Короля не беруть. Потрібно поставити мат.", "The king cannot be captured. You need to deliver checkmate."],
+        "Пешка не ходит назад или вбок.": ["Пішак не ходить назад або вбік.", "A pawn cannot move backwards or sideways."],
+        "Пешка может пройти две клетки только с начального ряда.": ["Пішак може пройти два поля лише з початкового ряду.", "A pawn can move two squares only from its starting rank."],
+        "Пешка ходит на одну клетку вперёд, а с начального ряда может на две.": ["Пішак ходить на одне поле вперед, а з початкового ряду може на два.", "A pawn moves one square forward, or two from its starting rank."],
+        "Пешка не берёт вперёд. Она берёт по диагонали.": ["Пішак не бере вперед. Він бере по діагоналі.", "A pawn cannot capture straight ahead. It captures diagonally."],
+        "Пешка берёт только на одну клетку по диагонали вперёд.": ["Пішак бере лише на одне поле по діагоналі вперед.", "A pawn captures one square diagonally forward."],
+        "На поле {0} нечего брать. Взятие на проходе сейчас недоступно.": ["На полі {0} немає що брати. Взяття на проході зараз недоступне.", "There is nothing to capture on {0}. En passant is not available."],
+        "Конь ходит буквой Г: две клетки в одном направлении и одна в другом.": ["Кінь ходить літерою Г: два поля в одному напрямку й одне в іншому.", "A knight moves in an L shape: two squares in one direction and one in the other."],
+        "Слон ходит только по диагонали.": ["Слон ходить лише по діагоналі.", "A bishop only moves diagonally."],
+        "Ладья ходит только по вертикали или горизонтали.": ["Тура ходить лише по вертикалі або горизонталі.", "A rook only moves along ranks or files."],
+        "Ферзь ходит по прямой или диагонали.": ["Ферзь ходить по прямій або діагоналі.", "A queen moves in straight lines or diagonally."],
+        "Король ходит на одну клетку.": ["Король ходить на одне поле.", "A king moves one square."],
+        "Путь перекрыт фигурой на поле {0}.": ["Шлях перекрито фігурою на полі {0}.", "The path is blocked by a piece on {0}."],
+        "На поле {0} король окажется под ударом.": ["На полі {0} король опиниться під ударом.", "The king would be under attack on {0}."],
+        "Вашему королю шах. Этот ход не защищает от шаха.": ["Вашому королю шах. Цей хід не захищає від шаху.", "Your king is in check. This move does not resolve it."],
+        "После этого хода ваш король окажется под шахом.": ["Після цього ходу ваш король опиниться під шахом.", "This move would leave your king in check."],
+        "Рокировка на эту сторону недоступна: король или ладья уже ходили, либо ладьи нет на месте.": ["Рокіровка на цей бік недоступна: король або тура вже ходили, або тури немає на місці.", "You cannot castle on this side: the king or rook has moved, or the rook is missing."],
+        "Нельзя рокироваться, пока король под шахом.": ["Не можна рокіруватися, поки король під шахом.", "You cannot castle while in check."],
+        "Рокировке мешает фигура на поле {0}.": ["Рокіровці заважає фігура на полі {0}.", "A piece on {0} blocks castling."],
+        "Нельзя рокироваться через поле под ударом: {0}.": ["Не можна рокіруватися через поле під ударом: {0}.", "You cannot castle through an attacked square: {0}."],
+        "На это поле могут пойти несколько фигур. Назовите начальное поле.": ["На це поле можуть піти кілька фігур. Назвіть початкове поле.", "More than one piece can move there. Name the starting square."],
+        "Уточните: короткая или длинная рокировка?": ["Уточніть: коротка чи довга рокіровка?", "Please specify kingside or queenside castling."],
+        "Пешку можно превратить только в ферзя, ладью, слона или коня.": ["Пішака можна перетворити лише на ферзя, туру, слона або коня.", "A pawn can promote only to a queen, rook, bishop or knight."],
+        "Превращение возможно только на последнем ряду.": ["Перетворення можливе лише на останньому ряду.", "Promotion is only possible on the last rank."],
+        "На поле {0} нет фигуры для взятия.": ["На полі {0} немає фігури для взяття.", "There is no piece to capture on {0}."],
+        "Не разобрал поля. Назовите начальное и конечное, например: е два, е четыре.": ["Не вдалося розібрати поля. Назвіть початкове й кінцеве, наприклад: е два, е чотири.", "Could not identify the squares. Say the starting and destination squares, for example: e two, e four."],
+        "На поле {0} стоит {1}, а не названная фигура.": ["На полі {0} стоїть {1}, а не названа фігура.", "The piece on {0} is a {1}, not the piece you named."],
+        "Уточните превращение: ферзь, ладья, слон или конь.": ["Уточніть перетворення: ферзь, тура, слон або кінь.", "Specify the promotion: queen, rook, bishop or knight."],
+        "У вас нет такой фигуры на доске.": ["У вас немає такої фігури на дошці.", "You do not have that type of piece on the board."],
+        "Не нахожу допустимого хода на поле {0}. Назовите начальное поле.": ["Не знаходжу допустимого ходу на поле {0}. Назвіть початкове поле.", "No legal move to {0} found. Name the starting square."],
+        "Белые": ["Білі", "White"],
+        "Чёрные": ["Чорні", "Black"],
+        "пешка": ["пішак", "pawn"],
+        "конь": ["кінь", "knight"],
+        "слон": ["слон", "bishop"],
+        "ладья": ["тура", "rook"],
+        "ферзь": ["ферзь", "queen"],
+        "король": ["король", "king"],
+        "пусто": ["порожньо", "empty"],
+        "берёт": ["бере", "takes"],
+        "на": ["на", "to"],
+        "Настройки": ["Налаштування", "Settings"],
+        "Язык": ["Мова", "Language"],
+        "Язык интерфейса и голосовых команд": ["Мова інтерфейсу й голосових команд", "Interface and voice command language"],
+    ]
+}
+
+func L(_ key: String, _ arguments: String...) -> String {
+    localizedText(key, language: AppLanguage.current, arguments: arguments)
+}
+
+func localizedText(_ key: String, language: AppLanguage, arguments: [String] = []) -> String {
+    var text = language == .ru ? key : (AppStrings.translations[key]?[language == .uk ? 0 : 1] ?? key)
+    for (index, value) in arguments.enumerated() {
+        text = text.replacingOccurrences(of: "{\(index)}", with: value)
+    }
+    return text
+}
+
+extension AppLanguage {
+    // Translate command vocabulary to the existing parser's canonical language.
+    // Match whole words so ordinary prose cannot accidentally become coordinates.
+    func canonicalCommand(_ text: String) -> String {
+        guard self != .ru else { return text }
+        var input = text.lowercased()
+            .replacingOccurrences(of: "’", with: "'")
+            .replacingOccurrences(of: "ʼ", with: "'")
+        let words: [String: String]
+        if self == .en {
+            words = ["pawn": "пешка", "knight": "конь", "night": "конь", "bishop": "слон",
+                     "rook": "ладья", "queen": "ферзь", "king": "король",
+                     "one": "1", "two": "2", "three": "3", "four": "4", "five": "5", "six": "6", "seven": "7", "eight": "8",
+                     "ay": "a", "bee": "b", "be": "b", "see": "c", "sea": "c", "dee": "d", "ee": "e",
+                     "ef": "f", "eff": "f", "gee": "g", "aitch": "h", "eitch": "h",
+                     "king side": "короткая", "queen side": "длинная", "kingside": "короткая", "queenside": "длинная",
+                     "short": "короткая", "long": "длинная", "castle": "рокировка", "castles": "рокировка", "castling": "рокировка",
+                     "takes": "берет", "take": "берет", "captures": "берет", "capture": "берет",
+                     "promote to": "превращение", "promotes to": "превращение", "promote": "превращение", "promotion": "превращение",
+                     "from": "из", "to": "на", "on": "на", "repeat": "повтори", "again": "повтори",
+                     "undo": "отмена", "back": "назад", "pause": "пауза", "stop": "стоп"]
+        } else {
+            words = ["пішак": "пешка", "пішака": "пешка", "пішаком": "пешка", "кінь": "конь", "конем": "конь", "коня": "конь",
+                     "тура": "ладья", "туру": "ладья", "турою": "ладья", "слоном": "слон", "слона": "слон",
+                     "ферзем": "ферзь", "ферзя": "ферзь", "королем": "король", "короля": "король",
+                     "чотири": "4", "п'ять": "5", "пять": "5", "шість": "6", "сім": "7", "вісім": "8",
+                     "еф": "f", "джі": "g", "ґе": "g", "ґ": "g", "ейч": "h", "ей": "a",
+                     "рокіровка": "рокировка", "рокірування": "рокировка", "рокіруй": "рокировка",
+                     "коротка": "короткая", "довга": "длинная", "довге": "длинная", "коротке": "короткая",
+                     "бере": "берет", "б'є": "бьет", "взяття": "берет", "перетворення": "превращение", "перетворити": "превращение",
+                     "повтори": "повтори", "повторити": "повтори", "скасувати": "отмена", "скасуй": "отмена", "назад": "назад", "від": "от", "з": "из", "із": "из"]
+        }
+        // One regex pass prevents a replacement from being translated a second time.
+        let keys = words.keys.sorted { $0.count > $1.count }.map(NSRegularExpression.escapedPattern(for:))
+        let pattern = "(?<![\\p{L}])(?:" + keys.joined(separator: "|") + ")(?![\\p{L}])"
+        guard let regex = try? NSRegularExpression(pattern: pattern) else { return input }
+        let matches = regex.matches(in: input, range: NSRange(input.startIndex..., in: input))
+        for match in matches.reversed() {
+            guard let range = Range(match.range, in: input), let replacement = words[String(input[range])] else { continue }
+            input.replaceSubrange(range, with: replacement)
+        }
+        return input
+    }
+}
