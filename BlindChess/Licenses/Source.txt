@@ -1,0 +1,6 @@
+Blind Chess 1.0 (48)
+Copyright (C) 2026 Dmytro Dubilet
+Licensed under GPL-3.0-or-later.
+Corresponding source, build instructions and notices:
+https://github.com/dmytro-dubilet/blind-chess
+No warranty; see GPL-3.txt.
