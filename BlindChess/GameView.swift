@@ -88,13 +88,27 @@ struct GameView: View {
                 Text(L("Шах")).font(.headline).padding(.bottom, 16)
             }
             if model.inputGame.outcome != nil {
-                VStack(spacing: 12) {
+                VStack(spacing: 16) {
                     HStack(spacing: 24) {
                         historyArrow(-1)
-                        Spacer().frame(width: 96)
+                        Color.clear.frame(width: 96, height: 96)
+                            .overlay {
+                                if model.game.winner == model.human && model.showBoard {
+                                    Text(L("Вы выиграли"))
+                                        .font(.headline)
+                                        .foregroundStyle(Palette.accent)
+                                        .multilineTextAlignment(.center)
+                                        .frame(width: 140)
+                                } else if model.game.winner != model.human, let outcome = model.game.outcome {
+                                    Text(outcome).font(.headline)
+                                        .multilineTextAlignment(.center)
+                                        .frame(width: 140)
+                                }
+                            }
                         historyArrow(1)
                     }
                     newGamePanel
+                        .frame(height: microphoneCaptionHeight, alignment: .top)
                 }.padding(.bottom, 32)
             } else if model.voice.preparing {
                 preparationPanel
@@ -219,11 +233,6 @@ struct GameView: View {
 
     private var newGamePanel: some View {
         VStack(spacing: 16) {
-            if model.game.winner == model.human && model.showBoard {
-                Text(L("Вы выиграли")).font(.headline).multilineTextAlignment(.center)
-            } else if model.game.winner != model.human, let outcome = model.game.outcome {
-                Text(outcome).font(.headline).multilineTextAlignment(.center)
-            }
             Button {
                 model.pauseVoice()
                 showSetup = true
@@ -237,7 +246,7 @@ struct GameView: View {
                 Button(L("Вернуться к игре")) { model.returnToLive() }
                     .font(.subheadline).foregroundStyle(Palette.muted)
             }
-        }.padding(20)
+        }.padding(10)
             .background(Palette.surface.opacity(0.55), in: RoundedRectangle(cornerRadius: 24))
     }
 
