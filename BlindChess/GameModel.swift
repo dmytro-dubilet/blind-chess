@@ -331,8 +331,12 @@ final class GameModel: ObservableObject {
         case .ambiguous, .invalid:
             if let match = MoveParser.contextualMatch(text, in: displayedPosition) {
                 trace("input.context_recovery", ["text": text, "score": String(match.score),
-                    "changed_destination": String(match.changedDestination), "candidates": match.moves.map(\.uci).joined(separator: ",")])
-                if match.moves.count == 1 {
+                    "changed_destination": String(match.changedDestination), "exact_destination": String(match.exactDestination), "candidates": match.moves.map(\.uci).joined(separator: ",")])
+                if match.canPlayAutomatically(uncertainSpeech: source != "voice" && source != "text") {
+                    trace("input.recovery_auto_accepted", ["original": text, "uci": match.moves[0].uci,
+                        "score": String(match.score), "reason": "unique_exact_destination", "source": source])
+                    receive(match.moves[0].uci, source: "voice_recovered")
+                } else if match.moves.count == 1 {
                     proposeRecovery(text, move: match.moves[0], reason: "context_phonetics")
                 } else {
                     askClarification(match.moves, needsConfirmation: parsed.result != .ambiguous || source == "voice_uncertain")

@@ -113,6 +113,7 @@ enum MoveParser {
         // Piece names following a promotion marker describe the new piece, not the moving pawn.
         let prefix = input.components(separatedBy: "превращ").first!.components(separatedBy: "=").first!
         for (name, value) in names where prefix.contains(name) { kind = value; break }
+        if kind == nil && squares.count == 1 { kind = .pawn }
         let promotionNames: [(String, PieceKind)] = [("ферз",.queen),("ладь",.rook),("слон",.bishop),("кон",.knight)]
         var promotion: PieceKind?
         if let marker = input.range(of: "превращ") {
@@ -276,9 +277,16 @@ enum MoveParser {
         let moves: [Move]
         let score: Double
         let changedDestination: Bool
+        let exactDestination: Bool
+
+        // The score is lexical similarity, not a calibrated probability.
+        // Never automate low-quality ASR, a guessed square or an ambiguous move.
+        func canPlayAutomatically(uncertainSpeech: Bool) -> Bool {
+            !uncertainSpeech && moves.count == 1 && exactDestination && !changedDestination && score >= 0.90
+        }
     }
 
-    /// All fuzzy results are proposals, never executable moves. The board ranks plausible
+    /// Only strong matches with an exact destination can execute automatically. The board ranks plausible
     /// readings, but cannot override a named source, rank, piece or capture requirement.
     static func contextualMatch(_ text: String, in position: Position) -> ContextMatch? {
         let input = normalizeVocabulary(text)
@@ -291,7 +299,7 @@ enum MoveParser {
         let files = ["а", "бэ", "цэ", "дэ", "е", "эф", "жэ", "аш"]
         let ranks = ["один", "два", "три", "четыре", "пять", "шесть", "семь", "восемь"]
         let legal = position.legalMoves().filter { $0.promotion == nil || $0.promotion == .queen }
-        var scores: [Move: (Double, Bool)] = [:]
+        var scores: [Move: (Double, Bool, Bool)] = [:]
         for length in 1...min(3, tokens.count) {
             let tail = Array(tokens.suffix(length))
             let prefix = Array(tokens.dropLast(length))
@@ -309,9 +317,10 @@ enum MoveParser {
             }
             let sound = recoverySound(spoken.joined())
             guard sound.count >= 3 else { continue }
+            let requestedKind = parts.kind ?? (parts.source == nil ? .pawn : nil)
             for move in legal {
                 guard parts.source == nil || parts.source == move.from,
-                      parts.kind == nil || parts.kind == position.board[move.from]?.kind,
+                      requestedKind == nil || requestedKind == position.board[move.from]?.kind,
                       !parts.capture || position.board[move.to] != nil || (position.board[move.from]?.kind == .pawn && position.enPassant == move.to),
                       knownRank == nil || knownRank == move.to / 8 else { continue }
                 let changed = known != nil && known != move.to
@@ -326,7 +335,7 @@ enum MoveParser {
                 guard destinationScore >= 0.70 else { continue }
                 let score = destinationScore * 0.75 + parts.score * 0.25 - (changed ? 0.04 : 0)
                 guard score >= 0.73 else { continue }
-                if score > (scores[move]?.0 ?? 0) { scores[move] = (score, changed) }
+                if score > (scores[move]?.0 ?? 0) { scores[move] = (score, changed, known == move.to) }
             }
         }
         let ranked = scores.sorted { $0.value.0 == $1.value.0 ? $0.key.uci < $1.key.uci : $0.value.0 > $1.value.0 }
@@ -334,7 +343,7 @@ enum MoveParser {
         let close = ranked.filter { best.value.0 - $0.value.0 < 0.065 }
         // Multiple readings of the destination need a new utterance, not a guessed move.
         guard Set(close.map { $0.key.to }).count == 1 else { return nil }
-        return ContextMatch(moves: close.map(\.key), score: best.value.0, changedDestination: best.value.1)
+        return ContextMatch(moves: close.map(\.key), score: best.value.0, changedDestination: best.value.1, exactDestination: best.value.2)
     }
 
     /// Very weak ASR may only propose a uniquely matching piece + exact destination.
@@ -466,7 +475,7 @@ enum MoveParser {
         }
         let names: [(String, PieceKind)] = [("пешк", .pawn), ("конь", .knight), ("конем", .knight), ("коня", .knight), ("слон", .bishop), ("ладь", .rook), ("ферз", .queen), ("корол", .king)]
         let prefix = input.components(separatedBy: "превращ").first!
-        let kind = names.first(where: { prefix.contains($0.0) })?.1
+        let kind = names.first(where: { prefix.contains($0.0) })?.1 ?? (squares.count == 1 ? .pawn : nil)
         if squares.count == 2 {
             if let kind, let piece = position.board[squares[0]], piece.side == position.turn, piece.kind != kind {
                 return MoveProblem(code: "piece_mismatch", message: L("На поле {0} стоит {1}, а не названная фигура.", String(describing: spokenSquare(squares[0])), String(describing: piece.kind.localizedName)))
