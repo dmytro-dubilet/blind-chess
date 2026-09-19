@@ -1,4 +1,4 @@
-Blind Chess 1.1 (51)
+Blind Chess 1.1 (52)
 Copyright (C) 2026 Dmytro Dubilet
 Licensed under GPL-3.0-or-later.
 Corresponding source, build instructions and notices:

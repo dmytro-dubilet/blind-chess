@@ -63,15 +63,6 @@ struct GameView: View {
                             .id(model.sessionID)
                     }
                 }.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                    .overlay {
-                        if model.game.winner == model.human && !model.isReviewing && !model.showBoard {
-                            GeometryReader { area in
-                                VictoryCelebration(showCard: !model.showBoard)
-                                    .frame(height: model.showBoard ? min(area.size.width, area.size.height) : area.size.height)
-                            }.allowsHitTesting(false)
-
-                        }
-                    }
                     .contentShape(Rectangle())
                     .simultaneousGesture(DragGesture(minimumDistance: 30).onEnded { value in
                         let x = value.translation.width, y = value.translation.height
@@ -93,12 +84,20 @@ struct GameView: View {
                         historyArrow(-1)
                         Color.clear.frame(width: 96, height: 96)
                             .overlay {
-                                if model.game.winner == model.human && model.showBoard {
-                                    Text(L("Вы выиграли"))
-                                        .font(.headline)
-                                        .foregroundStyle(Palette.accent)
-                                        .multilineTextAlignment(.center)
-                                        .frame(width: 140)
+                                if model.game.winner == model.human {
+                                    VStack(spacing: 8) {
+                                        Image(systemName: "trophy.fill")
+                                            .font(.system(size: 24, weight: .medium))
+                                            .accessibilityHidden(true)
+                                        Text(L("Вы выиграли"))
+                                            .font(.headline)
+                                            .multilineTextAlignment(.center)
+                                            .lineLimit(2)
+                                            .minimumScaleFactor(0.8)
+                                    }
+                                    .foregroundStyle(Palette.accent)
+                                    .frame(width: 140)
+                                    .accessibilityElement(children: .combine)
                                 } else if model.game.winner != model.human, let outcome = model.game.outcome {
                                     Text(outcome).font(.headline)
                                         .multilineTextAlignment(.center)
@@ -425,91 +424,6 @@ private struct TextMoveView: View {
         let count = model.game.records.count
         model.receive(text)
         if model.game.records.count != count || model.recoveryProposal != nil || model.undoConfirmation { dismiss() }
-    }
-}
-
-private struct VictoryCelebration: View {
-    let showCard: Bool
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var started = Date()
-    @State private var finished = false
-
-    var body: some View {
-        ZStack {
-            TimelineView(.animation(minimumInterval: 1.0 / 30, paused: finished || reduceMotion)) { timeline in
-                Canvas { context, size in
-                    guard !reduceMotion, !finished else { return }
-                    let elapsed = timeline.date.timeIntervalSince(started)
-                    let colors: [Color] = [Color(red: 0.75, green: 0.95, blue: 0.48),
-                                           Color(red: 1, green: 0.82, blue: 0.32),
-                                           Color(red: 0.4, green: 0.85, blue: 1),
-                                           Color(red: 1, green: 0.48, blue: 0.66), .white]
-                    // Several overlapping volleys surround the card; trails stay bright until the final fade.
-                    for burst in 0..<18 {
-                        let time = elapsed - Double(burst / 3) * 0.7 - Double(burst % 3) * 0.14
-                        guard time >= 0, time < 2.1 else { continue }
-                        let center = CGPoint(x: size.width * (0.12 + Double((burst * 3) % 9) * 0.095),
-                                             y: size.height * (0.12 + Double((burst * 5) % 7) * 0.115))
-                        for particle in 0..<56 {
-                            let angle = Double(particle) * .pi * 2 / 56 + Double(burst)
-                            let speed = (90 + Double(particle % 5) * 27) * min(size.width / 360, 1.5)
-                            func point(at t: Double) -> CGPoint {
-                                let distance = speed * (1 - exp(-1.1 * t))
-                                return CGPoint(x: center.x + cos(angle) * distance,
-                                               y: center.y + sin(angle) * distance + t * t * 38)
-                            }
-                            let tip = point(at: time)
-                            let tail = point(at: max(0, time - 0.13))
-                            let color = colors[(particle / 8 + burst) % colors.count]
-                            var layer = context
-                            layer.opacity = min(1, max(0, (2.1 - time) / 0.8))
-                            var trail = Path()
-                            trail.move(to: tail)
-                            trail.addLine(to: tip)
-                            layer.stroke(trail, with: .color(color.opacity(0.16)), style: StrokeStyle(lineWidth: 9, lineCap: .round))
-                            layer.stroke(trail, with: .color(color), style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
-                            let radius = 1.8 + Double(particle % 3) * 0.5
-                            layer.fill(Path(ellipseIn: CGRect(x: tip.x - radius, y: tip.y - radius,
-                                                             width: radius * 2, height: radius * 2)),
-                                       with: .color(color))
-                        }
-                    }
-                }
-            }.accessibilityHidden(true)
-            if showCard {
-            VStack(spacing: 16) {
-                Image(systemName: "trophy.fill")
-                    .font(.system(size: 48, weight: .medium))
-                    .foregroundStyle(Color(red: 0.26, green: 0.39, blue: 0.16))
-                    .frame(width: 88, height: 88)
-                    .background(.white.opacity(0.55), in: Circle())
-                    .accessibilityHidden(true)
-                Text(L("Вы победили!"))
-                    .font(.system(size: 30, weight: .bold, design: .rounded))
-                    .foregroundStyle(Palette.paper).multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .padding(.horizontal, 28).padding(.vertical, 28)
-            .frame(maxWidth: 310)
-            .background {
-                RoundedRectangle(cornerRadius: 30)
-                    .fill(LinearGradient(colors: [Color(red: 0.94, green: 0.98, blue: 0.86),
-                                                  Color(red: 0.76, green: 0.88, blue: 0.61)],
-                                         startPoint: .topLeading, endPoint: .bottomTrailing))
-            }
-            .overlay(RoundedRectangle(cornerRadius: 30).strokeBorder(.white.opacity(0.65), lineWidth: 1))
-            .shadow(color: .black.opacity(0.45), radius: 24, y: 12)
-            .padding(.horizontal, 20)
-            }
-        }
-        .clipped().allowsHitTesting(false)
-        .task {
-            started = Date()
-            guard !reduceMotion else { finished = true; return }
-            do { try await Task.sleep(for: .seconds(6)) }
-            catch { return }
-            finished = true
-        }
     }
 }
 
