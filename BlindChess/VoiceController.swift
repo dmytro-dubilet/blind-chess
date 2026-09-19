@@ -11,9 +11,15 @@ final class VoiceController: NSObject, ObservableObject, AVSpeechSynthesizerDele
     @Published private(set) var preparing = false
     @Published private(set) var preparationSlow = false
     @Published private(set) var ready = false
-    @Published private(set) var preparationLabel = ""
+    @Published private var preparationLabelKey = ""
+    var preparationLabel: String { L(preparationLabelKey) }
     @Published private(set) var preparationProgress: Double = 0
-    @Published private(set) var preparationStageLabel = ""
+    @Published private var preparationStage: Int? = nil
+    var preparationStageLabel: String {
+        guard let stage = preparationStage else { return L("Проверяем модель…") }
+        let keys = ["Подготовка звука", "Загрузка распознавания", "Подготовка обработки голоса", "Подготовка словаря"]
+        return L("Этап {0} из 4 · {1}", String(stage + 1), L(keys[stage]))
+    }
     @Published private(set) var downloadProgress: Double?
     @Published private(set) var transcript = ""
     @Published private(set) var inputLevel: Double = 0
@@ -124,7 +130,7 @@ final class VoiceController: NSObject, ObservableObject, AVSpeechSynthesizerDele
         trace("model.prepare_start", ["model": Self.modelName])
         preparing = true
         preparationProgress = 0
-        preparationStageLabel = L("Проверяем модель…")
+        preparationStage = nil
         preparationSlow = false
         let watchdog = Task { [weak self] in
             try? await Task.sleep(for: .seconds(30))
@@ -132,7 +138,7 @@ final class VoiceController: NSObject, ObservableObject, AVSpeechSynthesizerDele
             self.preparationSlow = true
             self.trace("model.prepare_slow", ["elapsed_ms": diagnosticMS(since: started)])
         }
-        preparationLabel = L("Готовим распознавание голоса…")
+        preparationLabelKey = "Готовим распознавание голоса…"
         downloadProgress = nil
         defer {
             watchdog.cancel()
@@ -156,7 +162,7 @@ final class VoiceController: NSObject, ObservableObject, AVSpeechSynthesizerDele
                 folder = cached
             } else {
                 trace("model.download_start")
-                preparationLabel = L("Загрузка голосовой модели")
+                preparationLabelKey = "Загрузка голосовой модели"
                 downloadProgress = 0
                 folder = try await WhisperKit.download(variant: Self.modelName, downloadBase: root) { [weak self] progress in
                     let fraction = progress.fractionCompleted
@@ -170,13 +176,13 @@ final class VoiceController: NSObject, ObservableObject, AVSpeechSynthesizerDele
             try Task.checkCancellation()
             guard preparationID == token else { return false }
             downloadProgress = nil
-            preparationLabel = L("Готовим распознавание голоса…")
+            preparationLabelKey = "Готовим распознавание голоса…"
             // Explicit local folders bypass model discovery/network calls on subsequent launches.
             let config = WhisperKitConfig(modelFolder: folder.path, tokenizerFolder: root,
                                           verbose: false, prewarm: false, load: false, download: false)
             let pipeline = try await WhisperKit(config)
             try Task.checkCancellation()
-            preparationStageLabel = L("Этап {0} из 4 · {1}", "1", L("Подготовка звука"))
+            preparationStage = 0
             // Each model property is protected by WhisperKit's @Protected lock.
             // Observe actual completed loads without replacing the library's loading logic.
             let stageMonitor = Task { @MainActor [weak self] in
@@ -188,9 +194,8 @@ final class VoiceController: NSObject, ObservableObject, AVSpeechSynthesizerDele
                     let encoderReady = (pipeline.audioEncoder as? WhisperMLModel)?.model != nil
                     let stage = encoderReady ? 3 : (decoderReady ? 2 : (featureReady ? 1 : 0))
                     if stage != previousStage {
-                        let labels = [L("Подготовка звука"), L("Загрузка распознавания"), L("Подготовка обработки голоса"), L("Подготовка словаря")]
                         self.preparationProgress = Double(stage) / 4
-                        self.preparationStageLabel = L("Этап {0} из 4 · {1}", String(stage + 1), labels[stage])
+                        self.preparationStage = stage
                         self.trace("model.prepare_stage", ["stage": String(stage + 1), "completed_fraction": String(self.preparationProgress), "elapsed_ms": diagnosticMS(since: started)])
                         previousStage = stage
                     }

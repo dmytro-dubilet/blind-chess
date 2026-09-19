@@ -20,6 +20,7 @@ enum MoveParser {
         switch language {
         case .ru: commands = ["отмена", "отмени", "отменить", "отмени ход", "отменить ход", "отмена хода", "отмени последний ход", "отменить последний ход", "назад"]
         case .uk: commands = ["скасування", "скасуй", "скасувати", "скасуй хід", "скасувати хід", "скасуй останній хід", "скасувати останній хід", "назад"]
+        case .es, .fr, .de, .it, .pt, .pl: commands = language.undoCommands
         case .en: commands = ["undo", "undo move", "undo the move", "undo last move", "undo the last move", "take back", "take back the last move", "back"]
         }
         return commands.contains(words)
@@ -35,6 +36,7 @@ enum MoveParser {
         switch language {
         case .ru: targets = ["отмена", "отмени", "отменить"]
         case .uk: targets = ["скасування", "скасуй", "скасувати"]
+        case .es, .fr, .de, .it, .pt, .pl: targets = [] // Do not guess control commands in newly added languages.
         case .en: targets = ["undo"]
         }
         return targets.contains { target in

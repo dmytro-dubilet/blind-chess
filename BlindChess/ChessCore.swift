@@ -79,6 +79,9 @@ func spokenSquare(_ square: Int) -> String {
     case .uk:
         files = ["а", "бе", "це", "де", "е", "еф", "же", "аш"]
         ranks = ["один", "два", "три", "чотири", "п’ять", "шість", "сім", "вісім"]
+    case .es, .fr, .de, .it, .pt, .pl:
+        files = AppLanguage.current.coordinateFiles
+        ranks = AppLanguage.current.coordinateRanks
     case .en:
         files = ["ay", "bee", "see", "dee", "ee", "ef", "gee", "aitch"]
         ranks = ["one", "two", "three", "four", "five", "six", "seven", "eight"]

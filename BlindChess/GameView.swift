@@ -650,9 +650,10 @@ private struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     var body: some View {
         NavigationStack {
+            ScrollView {
             VStack(alignment: .leading, spacing: 12) {
                 VStack(spacing: 0) {
-                    ForEach([AppLanguage.en, .ru, .uk]) { language in
+                    ForEach(AppLanguage.allCases) { language in
                         Button { model.setLanguage(language) } label: {
                             HStack {
                                 Text(language.name).foregroundStyle(Palette.ink)
@@ -662,13 +663,13 @@ private struct SettingsView: View {
                             }.padding(16).contentShape(Rectangle())
                         }.buttonStyle(JournalSafeButtonStyle())
                             .accessibilityAddTraits(model.language == language ? [.isSelected] : [])
-                        if language != .uk { Divider().padding(.horizontal, 16) }
+                        if language != AppLanguage.allCases.last { Divider().padding(.horizontal, 16) }
                     }
                 }.background(Palette.surface, in: RoundedRectangle(cornerRadius: 18))
                 Text(L("Язык интерфейса и голосовых команд"))
                     .font(.caption).foregroundStyle(Palette.muted)
-                Spacer(minLength: 0)
-            }.padding(24).background(Palette.paper)
+            }.padding(24)
+            }.background(Palette.paper)
                 .navigationTitle(L("Выбрать язык")).navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .confirmationAction) {
@@ -677,7 +678,7 @@ private struct SettingsView: View {
                     }
                 }
         }.tint(Palette.ink)
-            .presentationDetents([.height(350), .large])
+            .presentationDetents([.large])
             .presentationDragIndicator(.visible)
     }
 }
@@ -782,7 +783,11 @@ private struct SetupView: View {
         }.tint(Palette.ink)
             .presentationDetents([.height(500), .large])
             .presentationDragIndicator(.visible)
-            .onAppear { human = model.human }
+            .onAppear {
+                human = model.human
+                level = Difficulty(rating: model.difficulty == .maximum ? 2900 : model.difficulty.targetElo)
+                rating = Double(level.targetElo)
+            }
             .onChange(of: level) { _, value in model.trace("ui.difficulty", ["selected": value.rawValue]) }
             .onChange(of: human) { _, value in model.trace("ui.color", ["selected": value.rawValue]) }
     }
