@@ -8,7 +8,7 @@ Open BlindChess.xcodeproj in Xcode 26.2 or later. Resolve the pinned Swift packa
 
 Stockfish 17.1 sources, bridge, NNUE networks and build configuration are included in StockfishKit. The Xcode project pins WhisperKit 1.1.0; the resolved package revision is retained in the project workspace. Voice recognition downloads its model on first use. No credentials are required to build the app for the simulator.
 
-This source snapshot corresponds to version 1.1 (52). It is not a statement that Apple has approved or published the app. Private development logs and regression recordings are not included.
+This source snapshot corresponds to version 1.1 (53). It is not a statement that Apple has approved or published the app. Private development logs and regression recordings are not included.
 
 Interface, spoken moves and voice commands support English, Spanish, French, German, Italian, Portuguese (Brazilian voice), Polish, Russian and Ukrainian. The same multilingual Whisper model is used for every language.
 

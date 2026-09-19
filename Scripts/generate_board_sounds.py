@@ -1,4 +1,4 @@
-"""Generate original, short wooden-piece sounds. No third-party recordings.
+"""Generate original board sounds and a short checkmate explosion. No third-party recordings.
 Run from any directory; writes the bundled mono PCM WAV files.
 """
 from pathlib import Path
@@ -44,8 +44,35 @@ def render(name, duration, impacts, seed, tones=()):
 render('move.wav', .115, [(0, .8, 1)], 42)
 render('capture.wav', .18, [(0, .5, 1.16), (.043, .95, .78)], 73)
 
-# Two rising, restrained taps signal check; a low resolving impact signals mate.
+# Two rising, restrained taps signal check.
 render('check.wav', .36, [(0, .65, 1.25), (.085, .42, 1.48)], 101,
        [(0, 660, .14, 19), (.085, 880, .18, 17)])
-render('mate.wav', .68, [(0, .9, .62), (.14, .45, .48)], 137,
-       [(0, 220, .23, 8), (.14, 165, .24, 7), (.14, 330, .10, 9)])
+# A sharp blast, low pressure wave and fading debris. Band-limited noise gives
+# the explosion body on phone speakers without relying on sub-bass alone.
+def render_explosion():
+    rng = random.Random(137)
+    duration = 1.05
+    samples = []
+    low = mid = 0.0
+    phase = 0.0
+    debris = [(rng.uniform(.08, .68), rng.uniform(.025, .065)) for _ in range(18)]
+    for i in range(round(duration * RATE)):
+        t = i / RATE
+        noise = rng.uniform(-1, 1)
+        low += .035 * (noise - low)
+        mid += .19 * (noise - mid)
+        attack = 1 - math.exp(-t * 2800)
+        crack = .7 * noise * math.exp(-t * 100)
+        roar = (1.8 * low + .85 * mid) * math.exp(-t * 5.3)
+        phase += 2 * math.pi * (55 + 115 * math.exp(-t * 18)) / RATE
+        pressure = (.23 * math.sin(phase) + .10 * math.sin(phase * 2.07)) * math.exp(-t * 11)
+        crackle = sum(gain * noise * math.exp(-(t - start) * 180)
+                      for start, gain in debris if t >= start)
+        fade = min(1, (duration - t) / .1)
+        samples.append(attack * (crack + roar + pressure + crackle) * fade)
+    peak = max(abs(x) for x in samples)
+    with wave.open(str(OUT / 'mate.wav'), 'wb') as wav:
+        wav.setparams((1, 2, RATE, 0, 'NONE', 'not compressed'))
+        wav.writeframes(b''.join(struct.pack('<h', round(x / peak * 26000)) for x in samples))
+
+render_explosion()
