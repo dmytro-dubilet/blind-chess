@@ -115,9 +115,10 @@ struct GameView: View {
                     newGamePanel
                         .frame(height: microphoneCaptionHeight, alignment: .top)
                 }.padding(.bottom, 32)
+                    .background(controlsBackground)
             } else if model.voice.preparing {
                 if !model.showBoard {
-                    preparationPanel.padding(.bottom, 32)
+                    preparationPanel.padding(.bottom, 32).background(controlsBackground)
                 }
             } else {
             VStack(spacing: 28) {
@@ -126,7 +127,7 @@ struct GameView: View {
                         historyArrow(-1)
                     Group {
                         ZStack {
-                            Circle().fill(model.voice.listening ? Palette.accent : Palette.surface)
+                            Circle().fill(model.voice.listening ? Palette.accent : (model.showBoard ? Palette.surface : Color(red: 0.22, green: 0.23, blue: 0.24)))
                             if model.voice.preparing {
                                 Image(systemName: "mic.slash").font(.system(size: 30)).foregroundStyle(Palette.muted)
                             } else if model.authorizing {
@@ -191,12 +192,30 @@ struct GameView: View {
                     .frame(height: microphoneCaptionHeight, alignment: .top)
                 }
             }.padding(.bottom, 32)
+                .background(controlsBackground)
             }
         }
         .padding(.horizontal, 24).padding(.top, 8)
         .frame(maxWidth: 560).frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Palette.paper.ignoresSafeArea())
         .foregroundStyle(Palette.ink).tint(Palette.ink)
+    }
+
+    @ViewBuilder
+    private var controlsBackground: some View {
+        if !model.showBoard {
+            RoundedRectangle(cornerRadius: 26)
+                .fill(Color(red: 0.14, green: 0.15, blue: 0.16))
+                .overlay(alignment: .top) {
+                    Rectangle().fill(Palette.ink.opacity(0.09))
+                        .frame(height: 0.5).padding(.horizontal, 26)
+                }
+                // Draw into existing margins; the controls retain their exact positions.
+                .padding(.top, -16)
+                .padding(.horizontal, -8)
+                .allowsHitTesting(false)
+                .accessibilityHidden(true)
+        }
     }
 
     private func historyArrow(_ delta: Int) -> some View {
