@@ -317,7 +317,7 @@ final class GameModel: ObservableObject {
                 trace("history.branch", ["from_ply": String(ply), "removed_plies": String(removed), "move": move.uci])
             }
             game = updated
-            if showBoard && active { boardSounds.play(capture: game.records.last!.san.contains("x")) }
+            if showBoard && active { boardSounds.play(san: game.records.last!.san) }
             trace("move.player", ["san": game.records.last!.san, "outcome": game.outcome ?? ""])
             message = L("Ваш ход: {0}", String(describing: game.records.last!.san))
             persist()
@@ -434,7 +434,7 @@ final class GameModel: ObservableObject {
             self.message = self.game.outcome ?? L("Компьютер: {0}. Ваш ход.", String(describing: record.san))
             if self.active && !self.isReviewing && !self.browsingArchive {
                 if self.showBoard {
-                    self.boardSounds.play(capture: record.san.contains("x"))
+                    self.boardSounds.play(san: record.san)
                     self.trace("speech.move_skipped", ["reason": "board_visible"])
                     self.listenIfReady()
                 } else {
@@ -633,8 +633,9 @@ final class GameModel: ObservableObject {
 /// and do not reconfigure the shared recording/speech audio session.
 private final class BoardMoveSounds {
     private var sounds: [String: SystemSoundID] = [:]
-    func play(capture: Bool) {
-        let name = capture ? "capture" : "move"
+    func play(san: String) {
+        // One sound per move: mate and check take precedence even on a capture.
+        let name = san.hasSuffix("#") ? "mate" : san.hasSuffix("+") ? "check" : san.contains("x") ? "capture" : "move"
         if sounds[name] == nil {
             guard let url = Bundle.main.url(forResource: name, withExtension: "wav", subdirectory: "Sounds") else { return }
             var sound: SystemSoundID = 0
