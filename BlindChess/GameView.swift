@@ -57,7 +57,13 @@ struct GameView: View {
                     .accessibilityLabel(L("Вид игры"))
                 ZStack(alignment: .top) {
                     if model.showBoard {
-                        BoardView(model: model)
+                        VStack(spacing: 28) {
+                            BoardView(model: model)
+                            if model.voice.preparing && model.inputGame.outcome == nil {
+                                preparationPanel
+                            }
+                            Spacer(minLength: 0)
+                        }
                     } else {
                         MoveHistoryView(model: model)
                             .id(model.sessionID)
@@ -110,7 +116,9 @@ struct GameView: View {
                         .frame(height: microphoneCaptionHeight, alignment: .top)
                 }.padding(.bottom, 32)
             } else if model.voice.preparing {
-                preparationPanel
+                if !model.showBoard {
+                    preparationPanel.padding(.bottom, 32)
+                }
             } else {
             VStack(spacing: 28) {
                 VStack(spacing: 16) {
@@ -204,30 +212,40 @@ struct GameView: View {
     }
 
     private var preparationPanel: some View {
-                VStack(spacing: 8) {
-                    Text(model.voice.preparationLabel).font(.headline)
-                    Text(model.voice.downloadProgress != nil
-                         ? L("Скачиваем модель на телефон, чтобы распознавать голос без интернета.")
-                         : L("Модель уже на телефоне. Готовим её к работе без интернета."))
-                        .font(.subheadline).foregroundStyle(Palette.muted)
-                        .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
-                    if let progress = model.voice.downloadProgress {
-                        ProgressView(value: progress).tint(Palette.accent)
-                        Text(L("{0}% · около 220 МБ, один раз", String(describing: Int(progress * 100)))).font(.caption).foregroundStyle(Palette.muted)
-                    } else {
-                        ProgressView(value: model.voice.preparationProgress)
-                            .tint(Palette.accent)
-                            .accessibilityLabel(L("Готовим распознавание голоса…"))
-                            .accessibilityValue(model.voice.preparationStageLabel)
-                        Text(model.voice.preparationStageLabel)
-                            .font(.footnote).foregroundStyle(Palette.muted)
-                            .multilineTextAlignment(.center)
-                    }
-                    if model.voice.preparationSlow {
-                        Button(L("Повторить подготовку")) { model.voice.retryPreparation() }
-                            .tint(Palette.accent)
-                    }
-                }.padding(.horizontal, 12).padding(.bottom, 32)
+        VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text(model.voice.preparationLabel)
+                    .font(.subheadline.weight(.semibold))
+                    .fixedSize(horizontal: false, vertical: true)
+                Text(model.voice.downloadProgress != nil
+                     ? L("Скачиваем модель на телефон, чтобы распознавать голос без интернета.")
+                     : L("Модель уже на телефоне. Готовим её к работе без интернета."))
+                    .font(.footnote).foregroundStyle(Palette.muted)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            VStack(alignment: .leading, spacing: 8) {
+                if let progress = model.voice.downloadProgress {
+                    ProgressView(value: progress).tint(Palette.accent)
+                    Text(L("{0}% · около 220 МБ, один раз", String(Int(progress * 100))))
+                        .font(.caption).foregroundStyle(Palette.muted)
+                } else {
+                    ProgressView(value: model.voice.preparationProgress)
+                        .tint(Palette.accent)
+                        .accessibilityLabel(L("Готовим распознавание голоса…"))
+                        .accessibilityValue(model.voice.preparationStageLabel)
+                    Text(model.voice.preparationStageLabel)
+                        .font(.caption).foregroundStyle(Palette.muted)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            if model.voice.preparationSlow {
+                Button(L("Повторить подготовку")) { model.voice.retryPreparation() }
+                    .font(.subheadline).tint(Palette.accent)
+            }
+        }
+        .frame(maxWidth: 340, alignment: .leading)
+        .padding(.horizontal, 12)
+        .frame(maxWidth: .infinity)
     }
 
     private var newGamePanel: some View {
